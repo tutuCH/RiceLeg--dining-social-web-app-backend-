@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - controllers/AuthController.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet" type="text/css">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet" type="text/css">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet" type="text/css">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet" type="text/css">
+  <link href="../../assets/css/plato.css" rel="stylesheet" type="text/css">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="https://github.com/the-simian/es6-plato">ES6 Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+      <li class="active">
+        <a href="display.html">Summary Display</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>controllers/AuthController.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">61.65</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">217</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">30.36</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">1.23</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">/*
+ * COMPONENT NAME: AUTHCONTROLLER
+ * PROGRAMMER: YUE KA LONG, TU CHEN HSIEN
+ * VERSION: 1.0 (16 MAY 2020)
+ *
+ * PURPOSE: THIS IS THE AUTHENICATATION CONTROLLER OF THE EXPRESS.JS.
+ *          CONTROLLER IS USED TO CONTROL THE REQUEST SIGNAL AND GIVE THE RESPONSE AFTER
+ *          CERTAIN ACTION, IT HELPS TO CONVERT THE REQUEST PARAMS OR BODYS TO THE TYPE WE WANT TO SEE
+ *
+ *
+ */
+
+// import the module for handling the request in a certain format
+const { standardServiceResponse } = require(&quot;../utils/ResponseHandler&quot;);
+
+// import the service, where to do the query or editing to the database
+const authServices = require(&quot;../services/AuthServices.js&quot;);
+
+// import a node module for handling the login request
+const passport = require(&quot;passport&quot;);
+
+// as we use jwt token for our login, we import jwt module
+const jwt = require(&quot;jsonwebtoken&quot;);
+const secret_key = &quot;secret&quot;;
+
+// this controller is used to control the request signal and give the response after certain action
+// it helps to convert the request params or bodys to the type we want to use
+
+module.exports = {
+  //  this is for sign up request
+  signUp: function (req, res, next) {
+    try {
+      console.log(&quot;AuthController.signUp started!&quot;);
+      const newUser = req.body;
+      return standardServiceResponse(res, next, authServices.signUp(newUser));
+    } catch (err) {
+      console.log(
+        &quot;Error: AuthController.signUp: &quot; + JSON.parse(err.message)[&quot;message&quot;]
+      );
+      next(err);
+    }
+  },
+
+  //  this is for log in request
+  login: async function (req, res, next) {
+    try {
+      console.log(&quot;AuthController.login started!&quot;);
+      // we use passport for our authentication
+      return passport.authenticate(
+        &quot;local&quot;,
+        { session: false },
+        (err, user, info) =&gt; {
+          // if there have error occur we immediately send log out signal to our request
+          if (err) {
+            req.logOut();
+            return next(err);
+          }
+
+          // if the user is null we immediately send log out signal to our request
+          if (!user) {
+            req.logOut();
+            return next(info);
+          }
+
+          // send the login signal to our request
+          req.login(user, { session: false }, async (err) =&gt; {
+            // if error occur assign error to next function
+            if (err) {
+              return next(err);
+            }
+
+            // if no error occur
+            try {
+              // assign the jwt token
+              const token = jwt.sign(
+                {
+                  sub: user,
+                  exp: Math.floor(Date.now() / 1000) + 60 * 360,
+                },
+                secret_key
+              );
+
+              // return the response
+              return res.json({
+                success: true,
+                data: {
+                  userInfo: user,
+                  token: token,
+                },
+              });
+            } catch (e) {
+              // if error occur assign error to next function
+              return next(e);
+            }
+          });
+        }
+      )(req, res, next);
+    } catch (err) {
+      // if error occur console.log the error
+      console.log(
+        &quot;Error: AuthController.login: &quot; + JSON.parse(err.message)[&quot;message&quot;]
+      );
+
+      // assign error to next function
+      next(err);
+    }
+  },
+
+  //  this is for check logged in or not request
+  checkLogged: function (req, res, next) {
+    try {
+      console.log(&quot;AuthController.checkLogged started!&quot;);
+
+      // check the request header have jwt token or not
+      if (req.headers.hasOwnProperty(&quot;authorization&quot;)) {
+        // if have token, verify the jwt token
+        let user = {
+          userInfo: jwt.verify(
+            req.headers.authorization.split(&quot; &quot;)[1],
+            secret_key
+          )[&quot;sub&quot;],
+          token: req.headers.authorization.split(&quot; &quot;)[1],
+        };
+        return res.json({
+          statusCode: 200,
+          data: user,
+          success: true,
+        });
+      } else {
+        // if no token, return Unauthorized action
+        return res.json({
+          error: &quot;Unauthorized action&quot;,
+          statusCode: 403,
+          success: false,
+        });
+      }
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  //  this is for log out request
+  logout: function (req, res, next) {
+    try {
+      console.log(&quot;AuthController.logout started!&quot;);
+
+      // send request log out signal
+      req.logOut();
+
+      // return a success signal to let front end know logout successfully
+      return res.json({ data: { success: true, user: req.user } });
+    } catch (err) {
+      // if error occur console.log the error
+      console.log(
+        &quot;Error: AuthController.logout: &quot; + JSON.parse(err.message)[&quot;message&quot;]
+      );
+
+      // assign error to next function
+      next(err);
+    }
+  },
+
+  // this is for query the account information request
+  queryAccountInform: function (req, res, next) {
+    try {
+      console.log(&quot;AuthController.queryAccountInform started!&quot;);
+      const username = req.params.username;
+      //fetch data from account database using username as key
+      return standardServiceResponse(
+        res,
+        next,
+        authServices.queryAccountInform(username)
+      );
+    } catch (err) {
+      //if error occur console.log the error
+      console.log(
+        &quot;Error: AuthController.queryAccountInform: &quot; +
+          JSON.parse(err.message)[&quot;message&quot;]
+      );
+      next(err);
+    }
+  },
+  updateProfile: function (req, res, next) {
+    // defining the object that will be passed to authServices.updateProfile()
+    try {
+      console.log(&quot;AuthController.updateProfile started!&quot;);
+
+      //objects needed to be fetched from datavase
+      obj = {
+        username: req.body.username,
+        password: req.body.password,
+        displayName: req.body.displayName,
+        email: req.body.email,
+        year: req.body.year,
+        major: req.body.major,
+        email: req.body.email,
+        college: req.body.college,
+        selfIntro: req.body.selfIntro,
+        oldpw: req.body.oldpw,
+      };
+      //fetch data from database
+      return standardServiceResponse(
+        res,
+        next,
+        authServices.updateProfile(obj)
+      );
+    } catch (err) {
+      //if error occur console.log the error
+      console.log(
+        &quot;Error: AuthController.updateProfile: &quot; +
+          JSON.parse(err.message)[&quot;message&quot;]
+      );
+      next(err);
+    }
+  },
+};
+</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ complexity.cyclomatic }} <br>
+    Length : {{ complexity.halstead.length }} <br>
+    Difficulty : {{ complexity.halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ complexity.halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>
